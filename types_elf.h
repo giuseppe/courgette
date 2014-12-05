@@ -145,4 +145,210 @@ enum elf32_rel_arm_type_values {
   R_ARM_RELATIVE = 23,
 };
 
+/* ELf64 */
+typedef uint16_t Elf64_Half;
+typedef uint32_t Elf64_Word;
+typedef	int32_t  Elf64_Sword;
+typedef uint64_t Elf64_Xword;
+typedef	int64_t  Elf64_Sxword;
+typedef uint64_t Elf64_Addr;
+typedef uint64_t Elf64_Off;
+typedef uint16_t Elf64_Section;
+typedef Elf64_Half Elf64_Versym;
+
+typedef struct
+{
+  unsigned char	e_ident[16];	        /* Magic number and other info */
+  Elf64_Half	e_type;			/* Object file type */
+  Elf64_Half	e_machine;		/* Architecture */
+  Elf64_Word	e_version;		/* Object file version */
+  Elf64_Addr	e_entry;		/* Entry point virtual address */
+  Elf64_Off	e_phoff;		/* Program header table file offset */
+  Elf64_Off	e_shoff;		/* Section header table file offset */
+  Elf64_Word	e_flags;		/* Processor-specific flags */
+  Elf64_Half	e_ehsize;		/* ELF header size in bytes */
+  Elf64_Half	e_phentsize;		/* Program header table entry size */
+  Elf64_Half	e_phnum;		/* Program header table entry count */
+  Elf64_Half	e_shentsize;		/* Section header table entry size */
+  Elf64_Half	e_shnum;		/* Section header table entry count */
+  Elf64_Half	e_shstrndx;		/* Section header string table index */
+} Elf64_Ehdr;
+
+typedef struct
+{
+  Elf64_Word	p_type;			/* Segment type */
+  Elf64_Word	p_flags;		/* Segment flags */
+  Elf64_Off	p_offset;		/* Segment file offset */
+  Elf64_Addr	p_vaddr;		/* Segment virtual address */
+  Elf64_Addr	p_paddr;		/* Segment physical address */
+  Elf64_Xword	p_filesz;		/* Segment size in file */
+  Elf64_Xword	p_memsz;		/* Segment size in memory */
+  Elf64_Xword	p_align;		/* Segment alignment */
+} Elf64_Phdr;
+
+typedef struct
+{
+  Elf64_Sxword	d_tag;			/* Dynamic entry type */
+  union
+    {
+      Elf64_Xword d_val;		/* Integer value */
+      Elf64_Addr d_ptr;			/* Address value */
+    } d_un;
+} Elf64_Dyn;
+
+typedef struct
+{
+  Elf64_Half	vd_version;		/* Version revision */
+  Elf64_Half	vd_flags;		/* Version information */
+  Elf64_Half	vd_ndx;			/* Version Index */
+  Elf64_Half	vd_cnt;			/* Number of associated aux entries */
+  Elf64_Word	vd_hash;		/* Version name hash value */
+  Elf64_Word	vd_aux;			/* Offset in bytes to verdaux array */
+  Elf64_Word	vd_next;		/* Offset in bytes to next verdef
+					   entry */
+} Elf64_Verdef;
+
+typedef struct
+{
+  Elf64_Word	vda_name;		/* Version or dependency names */
+  Elf64_Word	vda_next;		/* Offset in bytes to next verdaux
+					   entry */
+} Elf64_Verdaux;
+
+typedef struct
+{
+  Elf64_Half	vn_version;		/* Version of structure */
+  Elf64_Half	vn_cnt;			/* Number of associated aux entries */
+  Elf64_Word	vn_file;		/* Offset of filename for this
+					   dependency */
+  Elf64_Word	vn_aux;			/* Offset in bytes to vernaux array */
+  Elf64_Word	vn_next;		/* Offset in bytes to next verneed
+					   entry */
+} Elf64_Verneed;
+
+typedef struct
+{
+  Elf64_Word	vna_hash;		/* Hash value of dependency name */
+  Elf64_Half	vna_flags;		/* Dependency specific information */
+  Elf64_Half	vna_other;		/* Unused */
+  Elf64_Word	vna_name;		/* Dependency name string offset */
+  Elf64_Word	vna_next;		/* Offset in bytes to next vernaux
+					   entry */
+} Elf64_Vernaux;
+
+typedef struct
+{
+  uint64_t a_type;		/* Entry type */
+  union
+    {
+      uint64_t a_val;		/* Integer value */
+      /* We use to have pointer elements added here.  We cannot do that,
+	 though, since it does not work when using 32-bit definitions
+	 on 64-bit platforms and vice versa.  */
+    } a_un;
+} Elf64_auxv_t;
+
+typedef struct
+{
+  Elf64_Word n_namesz;			/* Length of the note's name.  */
+  Elf64_Word n_descsz;			/* Length of the note's descriptor.  */
+  Elf64_Word n_type;			/* Type of the note.  */
+} Elf64_Nhdr;
+
+typedef struct
+{
+  Elf64_Xword m_value;		/* Symbol value.  */
+  Elf64_Xword m_info;		/* Size and index.  */
+  Elf64_Xword m_poffset;	/* Symbol offset.  */
+  Elf64_Half m_repeat;		/* Repeat count.  */
+  Elf64_Half m_stride;		/* Stride info.  */
+} Elf64_Move;
+
+typedef struct
+{
+  Elf64_Word l_name;		/* Name (string table index) */
+  Elf64_Word l_time_stamp;	/* Timestamp */
+  Elf64_Word l_checksum;	/* Checksum */
+  Elf64_Word l_version;		/* Interface version */
+  Elf64_Word l_flags;		/* Flags */
+} Elf64_Lib;
+
+#define R_X86_64_NONE		0	/* No reloc */
+#define R_X86_64_64		1	/* Direct 64 bit  */
+#define R_X86_64_PC32		2	/* PC relative 32 bit signed */
+#define R_X86_64_GOT32		3	/* 32 bit GOT entry */
+#define R_X86_64_PLT32		4	/* 32 bit PLT address */
+#define R_X86_64_COPY		5	/* Copy symbol at runtime */
+#define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
+#define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
+#define R_X86_64_RELATIVE	8	/* Adjust by program base */
+#define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative
+					   offset to GOT */
+#define R_X86_64_32		10	/* Direct 32 bit zero extended */
+#define R_X86_64_32S		11	/* Direct 32 bit sign extended */
+#define R_X86_64_16		12	/* Direct 16 bit zero extended */
+#define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
+#define R_X86_64_8		14	/* Direct 8 bit sign extended  */
+#define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
+#define R_X86_64_DTPMOD64	16	/* ID of module containing symbol */
+#define R_X86_64_DTPOFF64	17	/* Offset in module's TLS block */
+#define R_X86_64_TPOFF64	18	/* Offset in initial TLS block */
+#define R_X86_64_TLSGD		19	/* 32 bit signed PC relative offset
+					   to two GOT entries for GD symbol */
+#define R_X86_64_TLSLD		20	/* 32 bit signed PC relative offset
+					   to two GOT entries for LD symbol */
+#define R_X86_64_DTPOFF32	21	/* Offset in TLS block */
+#define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset
+					   to GOT entry for IE symbol */
+#define R_X86_64_TPOFF32	23	/* Offset in initial TLS block */
+#define R_X86_64_PC64		24	/* PC relative 64 bit */
+#define R_X86_64_GOTOFF64	25	/* 64 bit offset to GOT */
+#define R_X86_64_GOTPC32	26	/* 32 bit signed pc relative
+					   offset to GOT */
+#define R_X86_64_GOT64		27	/* 64-bit GOT entry offset */
+#define R_X86_64_GOTPCREL64	28	/* 64-bit PC relative offset
+					   to GOT entry */
+#define R_X86_64_GOTPC64	29	/* 64-bit PC relative offset to GOT */
+#define R_X86_64_GOTPLT64	30 	/* like GOT64, says PLT entry needed */
+#define R_X86_64_PLTOFF64	31	/* 64-bit GOT relative offset
+					   to PLT entry */
+#define R_X86_64_SIZE32		32	/* Size of symbol plus 32-bit addend */
+#define R_X86_64_SIZE64		33	/* Size of symbol plus 64-bit addend */
+#define R_X86_64_GOTPC32_TLSDESC 34	/* GOT offset for TLS descriptor.  */
+#define R_X86_64_TLSDESC_CALL   35	/* Marker for call through TLS
+					   descriptor.  */
+#define R_X86_64_TLSDESC        36	/* TLS descriptor.  */
+#define R_X86_64_IRELATIVE	37	/* Adjust indirectly by program base */
+#define R_X86_64_RELATIVE64	38	/* 64-bit adjust by program base */
+
+#define R_X86_64_NUM		39
+
+typedef struct
+{
+  Elf64_Addr	r_offset;		/* Address */
+  Elf64_Xword	r_info;			/* Relocation type and symbol index */
+} Elf64_Rel;
+
+typedef struct
+{
+  Elf64_Addr	r_offset;		/* Address */
+  Elf64_Xword	r_info;			/* Relocation type and symbol index */
+  Elf64_Sxword	r_addend;		/* Addend */
+} Elf64_Rela;
+
+
+typedef struct
+{
+  Elf64_Word	sh_name;		/* Section name (string tbl index) */
+  Elf64_Word	sh_type;		/* Section type */
+  Elf64_Xword	sh_flags;		/* Section flags */
+  Elf64_Addr	sh_addr;		/* Section virtual addr at execution */
+  Elf64_Off	sh_offset;		/* Section file offset */
+  Elf64_Xword	sh_size;		/* Section size in bytes */
+  Elf64_Word	sh_link;		/* Link to another section */
+  Elf64_Word	sh_info;		/* Additional section information */
+  Elf64_Xword	sh_addralign;		/* Section alignment */
+  Elf64_Xword	sh_entsize;		/* Entry size if section holds table */
+} Elf64_Shdr;
+
 #endif  // COURGETTE_ELF_TYPES_H_
