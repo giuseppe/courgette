@@ -30,6 +30,7 @@ enum OP {
   REL32ARM,       // REL32ARM <c_op> <label> - arm-specific rel32 reference
   MAKEELFARMRELOCS, // Generates a base relocation table.
   DEFBYTES,       // Emits any number of byte literals
+  RELA64,         // RELA6432 <offset> <addend>.
   LAST_OP
 };
 
@@ -114,6 +115,18 @@ class InstructionWithLabel : public Instruction {
   Label* label_;
 };
 
+class Rela64Instruction : public Instruction {
+ public:
+  explicit Rela64Instruction(uint64 offset, int64 addend) : Instruction(RELA64, 0),
+                                                            offset_(offset),
+                                                            addend_(addend) {}
+  int64 addend() const { return addend_; }
+  uint64 offset() const { return offset_; }
+ private:
+  uint64 offset_;
+  int64 addend_;
+};
+
 // An ARM REL32 instruction emits a reference to a label's address and
 // a specially-compressed ARM op.
 class InstructionWithLabelARM : public InstructionWithLabel {
@@ -181,6 +194,10 @@ CheckBool AssemblyProgram::EmitByteInstruction(uint8 byte) {
 CheckBool AssemblyProgram::EmitBytesInstruction(const uint8* values,
                                                 size_t len) {
   return Emit(new(std::nothrow) BytesInstruction(values, len));
+}
+
+CheckBool AssemblyProgram::EmitRela64(uint64 offset, int64 addend) {
+  return Emit(new(std::nothrow) Rela64Instruction(offset, addend));
 }
 
 CheckBool AssemblyProgram::EmitRel32(Label* label) {
@@ -399,7 +416,6 @@ EncodedProgram* AssemblyProgram::Encode() const {
                     &EncodedProgram::DefineRel32Label)) {
     return NULL;
   }
-
   encoded->EndLabels();
 
   for (size_t i = 0;  i < instructions_.size();  ++i) {
@@ -430,6 +446,12 @@ EncodedProgram* AssemblyProgram::Encode() const {
       case REL32: {
         Label* label = static_cast<InstructionWithLabel*>(instruction)->label();
         if (!encoded->AddRel32(label->index_))
+          return NULL;
+        break;
+      }
+      case RELA64: {
+        Rela64Instruction* i = static_cast<Rela64Instruction*>(instruction);
+        if (!encoded->AddRela64(i->offset(), i->addend()))
           return NULL;
         break;
       }

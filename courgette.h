@@ -59,6 +59,7 @@ enum ExecutableType {
   EXE_ELF_32_X86 = 2,
   EXE_ELF_32_ARM = 3,
   EXE_WIN_32_X64 = 4,
+  EXE_ELF_64_X86_64 = 5,
 };
 
 class SinkStream;

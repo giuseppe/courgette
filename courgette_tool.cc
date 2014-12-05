@@ -145,6 +145,11 @@ bool Supported(const base::FilePath& input_file) {
       format = "Windows 64 PE";
       result = true;
       break;
+
+  case courgette::EXE_ELF_64_X86_64:
+      format = "ELF 64 X86_64";
+      result = true;
+      break;
   }
 
   printf("%s Executable\n", format.c_str());

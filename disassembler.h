@@ -20,6 +20,7 @@ class AssemblyProgram;
 // A Relative Virtual Address is the address in the image file after it is
 // loaded into memory relative to the image load address.
 typedef uint32 RVA;
+typedef uint64 RVA64;
 
 class Disassembler {
  public:
@@ -65,6 +66,10 @@ class Disassembler {
 
   uint64 ReadU64(const uint8* address, size_t offset) {
     return *reinterpret_cast<const uint64*>(address + offset);
+  }
+
+  static uint64 Read64LittleEndian(const void* address) {
+    return *reinterpret_cast<const uint64*>(address);
   }
 
   static uint32 Read32LittleEndian(const void* address) {

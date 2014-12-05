@@ -37,6 +37,7 @@ class Varint {
  public:
   // Maximum lengths of varint encoding of uint32
   static const int kMax32 = 5;
+  static const int kMax64 = 10;
 
   // Parses a Varint32 encoded value from |source| and stores it in |output|,
   // and returns a pointer to the following byte.  Returns NULL if a valid
@@ -142,6 +143,24 @@ bool SourceStream::ReadVarint32(uint32* output_value) {
   return true;
 }
 
+bool SourceStream::ReadVarint64(uint64* output_value) {
+  uint64 result = 0;
+  int count = 0;
+  uint32 b;
+
+  do {
+    if (count == Varint::kMax64)
+      return false;
+    b = *current_;
+    result |= static_cast<uint64>(b & 0x7F) << (7 * count);
+    current_++;
+    ++count;
+  } while (b & 0x80);
+
+  *output_value = result;
+  return true;
+}
+
 bool SourceStream::ReadVarint32Signed(int32* output_value) {
   // Signed numbers are encoded as unsigned numbers so that numbers nearer zero
   // have shorter varint encoding.
@@ -202,6 +221,17 @@ CheckBool SinkStream::WriteVarint32Signed(int32 value) {
   else
     ret = WriteVarint32(value * 2);
   return ret;
+}
+
+CheckBool SinkStream::WriteVarint64(uint64 value) {
+  uint8 bytes[Varint::kMax64];
+  int size = 0;
+  while (value > 0x7F) {
+    bytes[size++] = (static_cast<uint8>(value) & 0x7F) | 0x80;
+    value >>= 7;
+  }
+  bytes[size++] = static_cast<uint8>(value) & 0x7F;
+  return Write(bytes, size);
 }
 
 CheckBool SinkStream::WriteSizeVarint32(size_t value) {

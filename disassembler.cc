@@ -15,6 +15,7 @@
 #include "courgette/courgette.h"
 #include "courgette/disassembler_elf_32_arm.h"
 #include "courgette/disassembler_elf_32_x86.h"
+#include "courgette/disassembler_elf_64_x86_64.h"
 #include "courgette/disassembler_win32_x64.h"
 #include "courgette/disassembler_win32_x86.h"
 #include "courgette/encoded_program.h"
@@ -45,6 +46,12 @@ Disassembler* DetectDisassembler(const void* buffer, size_t length) {
     delete disassembler;
 
   disassembler = new DisassemblerElf32ARM(buffer, length);
+  if (disassembler->ParseHeader())
+    return disassembler;
+  else
+    delete disassembler;
+
+  disassembler = new DisassemblerElf64X86_64(buffer, length);
   if (disassembler->ParseHeader())
     return disassembler;
   else

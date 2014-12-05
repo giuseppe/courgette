@@ -43,6 +43,7 @@ class EncodedProgram {
   CheckBool AddOrigin(RVA rva) WARN_UNUSED_RESULT;
   CheckBool AddCopy(size_t count, const void* bytes) WARN_UNUSED_RESULT;
   CheckBool AddRel32(int label_index) WARN_UNUSED_RESULT;
+  CheckBool AddRela64(uint64 offset, int64 addend) WARN_UNUSED_RESULT;
   CheckBool AddRel32ARM(uint16 op, int label_index) WARN_UNUSED_RESULT;
   CheckBool AddAbs32(int label_index) WARN_UNUSED_RESULT;
   CheckBool AddPeMakeRelocs(ExecutableType kind) WARN_UNUSED_RESULT;
@@ -76,6 +77,7 @@ class EncodedProgram {
     MAKE_ELF_RELOCATION_TABLE = 6, // Emit Elf relocation table for X86
     MAKE_ELF_ARM_RELOCATION_TABLE = 7, // Emit Elf relocation table for ARM
     MAKE_PE64_RELOCATION_TABLE = 8, // Emit PE64 base relocation table blocks.
+    RELA64 = 9,     // RELA64 <offset> - <addend> emit rela64 encoded reference.
     // ARM reserves 0x1000-LAST_ARM, bits 13-16 define the opcode
     // subset, and 1-12 are the compressed ARM op.
     REL32ARM8   = 0x1000,
@@ -88,6 +90,8 @@ class EncodedProgram {
 
   typedef NoThrowBuffer<RVA> RvaVector;
   typedef NoThrowBuffer<size_t> SizeTVector;
+  typedef NoThrowBuffer<int64> Int64Vector;
+  typedef NoThrowBuffer<uint64> UInt64Vector;
   typedef NoThrowBuffer<uint32> UInt32Vector;
   typedef NoThrowBuffer<uint8> UInt8Vector;
   typedef NoThrowBuffer<OP> OPVector;
@@ -105,7 +109,7 @@ class EncodedProgram {
                              SinkStream* output);
 
   // Binary assembly language tables.
-  uint64 image_base_;
+  int64 image_base_;
   RvaVector rel32_rva_;
   RvaVector abs32_rva_;
   OPVector ops_;
@@ -114,6 +118,8 @@ class EncodedProgram {
   UInt8Vector copy_bytes_;
   UInt32Vector rel32_ix_;
   UInt32Vector abs32_ix_;
+  UInt64Vector rela64_offset_ix_;
+  Int64Vector rela64_addend_ix_;
 
   // Table of the addresses containing abs32 relocations; computed during
   // assembly, used to generate base relocation table.

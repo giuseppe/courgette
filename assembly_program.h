@@ -93,6 +93,9 @@ class AssemblyProgram {
   // Generates 4-byte relative reference to address of 'label'.
   CheckBool EmitRel32(Label* label) WARN_UNUSED_RESULT;
 
+  // Generates rela64.
+  CheckBool EmitRela64(uint64 offset, int64 addend) WARN_UNUSED_RESULT;
+
   // Generates 4-byte relative reference to address of 'label' for
   // ARM.
   CheckBool EmitRel32ARM(uint16 op, Label* label, const uint8* arm_op,

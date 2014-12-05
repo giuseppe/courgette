@@ -78,6 +78,8 @@ class SourceStream {
   // the read failed due to insufficient data or malformed Varint32.
   bool ReadVarint32(uint32* output_value);
 
+  bool ReadVarint64(uint64* output_value);
+
   // Reads a varint formatted signed integer from stream.  Returns 'false' if
   // the read failed due to insufficient data or malformed Varint32.
   bool ReadVarint32Signed(int32* output_value);
@@ -132,6 +134,8 @@ class SinkStream {
   // Appends the 'varint32' encoding of |value| to the stream.
   // On platforms where sizeof(size_t) != sizeof(int32), do a safety check.
   CheckBool WriteSizeVarint32(size_t value) WARN_UNUSED_RESULT;
+
+  CheckBool WriteVarint64(uint64 value) WARN_UNUSED_RESULT;
 
   // Contents of |other| are appended to |this| stream.  The |other| stream
   // becomes retired.

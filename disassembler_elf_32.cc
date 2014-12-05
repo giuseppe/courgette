@@ -160,7 +160,7 @@ CheckBool DisassemblerElf32::IsValidRVA(RVA rva) const {
 
 // Returns RVA for an in memory address, or NULL.
 CheckBool DisassemblerElf32::RVAToFileOffset(Elf32_Addr addr,
-                                                size_t* result) const {
+                                             size_t* result) const {
 
   for (int i = 0; i < ProgramSegmentHeaderCount(); i++) {
     Elf32_Addr begin = ProgramSegmentMemoryBegin(i);

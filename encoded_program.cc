@@ -31,6 +31,7 @@ const int kStreamAbs32Addresses = 5;
 const int kStreamRel32Addresses = 6;
 const int kStreamCopyCounts = 7;
 const int kStreamOriginAddresses = kStreamMisc;
+const int kStreamRela64Addresses = 8;
 
 const int kStreamLimit = 9;
 
@@ -83,6 +84,50 @@ CheckBool WriteU32Delta(const V& set, SinkStream* buffer) {
     prev = current;
   }
   return ok;
+}
+
+template<typename V>
+CheckBool WriteU64Delta(const V& set, SinkStream* buffer) {
+  size_t count = set.size();
+  if (!buffer->WriteSizeVarint32(count))
+    return false;
+  uint64 prev = 0;
+  for (size_t i = 0;  i < count;  ++i) {
+    uint64 current = set[i];
+    uint64 delta = current - prev;
+
+    if (!buffer->WriteVarint64(delta))
+      return false;
+    prev = current;
+  }
+  return true;
+}
+
+template<typename V>
+bool ReadU64Delta(V* items, SourceStream* buffer) {
+  uint32 count;
+  if (!buffer->ReadVarint32(&count))
+    return false;
+
+  items->clear();
+
+  if (!items->reserve(count))
+    return false;
+  uint64 prev = 0;
+  for (size_t i = 0;  i < count;  ++i) {
+    uint64 delta;
+
+    if (!buffer->ReadVarint64(&delta))
+      return false;
+
+    uint64 current = prev + delta;
+
+    if (!items->push_back(current))
+      return false;
+    prev = current;
+  }
+
+  return true;
 }
 
 template <typename V>
@@ -241,6 +286,13 @@ CheckBool EncodedProgram::AddRel32(int label_index) {
   return ops_.push_back(REL32) && rel32_ix_.push_back(label_index);
 }
 
+
+CheckBool EncodedProgram::AddRela64(uint64 offset, int64 addend) {
+  return ops_.push_back(RELA64) &&
+    rela64_offset_ix_.push_back(offset) &&
+    rela64_addend_ix_.push_back(addend);
+}
+
 CheckBool EncodedProgram::AddRel32ARM(uint16 op, int label_index) {
   return ops_.push_back(static_cast<OP>(op)) &&
       rel32_ix_.push_back(label_index);
@@ -270,7 +322,8 @@ void EncodedProgram::DebuggingSummary() {
           << "\n  copy_counts " << copy_counts_.size()
           << "\n  copy_bytes  " << copy_bytes_.size()
           << "\n  abs32_ix    " << abs32_ix_.size()
-          << "\n  rel32_ix    " << rel32_ix_.size();
+          << "\n  rel32_ix    " << rel32_ix_.size()
+          << "\n  rela64_ix   " << rela64_addend_ix_.size();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -288,7 +341,8 @@ enum FieldSelect {
   INCLUDE_OPS             = 0x0100,
   INCLUDE_BYTES           = 0x0200,
   INCLUDE_COPY_COUNTS     = 0x0400,
-  INCLUDE_MISC            = 0x1000
+  INCLUDE_MISC            = 0x1000,
+  INCLUDE_RELA64_INDEXES  = 0x2000,
 };
 
 static FieldSelect GetFieldSelect() {
@@ -355,6 +409,13 @@ CheckBool EncodedProgram::WriteTo(SinkStreamSet* streams) {
   if (select & INCLUDE_REL32_INDEXES)
     success &= WriteVector(rel32_ix_, streams->stream(kStreamRel32Indexes));
 
+  if (select & INCLUDE_RELA64_INDEXES) {
+    success &= WriteU64Delta(rela64_offset_ix_,
+                             streams->stream(kStreamRela64Addresses));
+    success &= WriteU64Delta(rela64_addend_ix_,
+                             streams->stream(kStreamRela64Addresses));
+  }
+
   return success;
 }
 
@@ -380,6 +441,10 @@ bool EncodedProgram::ReadFrom(SourceStreamSet* streams) {
   if (!ReadVector(&abs32_ix_, streams->stream(kStreamAbs32Indexes)))
     return false;
   if (!ReadVector(&rel32_ix_, streams->stream(kStreamRel32Indexes)))
+    return false;
+  if (!ReadU64Delta(&rela64_offset_ix_, streams->stream(kStreamRela64Addresses)))
+    return false;
+  if (!ReadU64Delta(&rela64_addend_ix_, streams->stream(kStreamRela64Addresses)))
     return false;
 
   // Check that streams have been completely consumed.
@@ -522,6 +587,7 @@ CheckBool EncodedProgram::AssembleTo(SinkStream* final_buffer) {
   size_t ix_copy_bytes = 0;
   size_t ix_abs32_ix = 0;
   size_t ix_rel32_ix = 0;
+  size_t ix_rela64_ix = 0;
 
   RVA current_rva = 0;
 
@@ -590,6 +656,30 @@ CheckBool EncodedProgram::AssembleTo(SinkStream* final_buffer) {
         if (!output->Write(&offset, 4))
           return false;
         current_rva += 4;
+        break;
+      }
+
+      case RELA64: {
+        uint64 read_offset;
+        int64 read_addend;
+        uint64_t info = R_X86_64_RELATIVE;
+        if (!VectorAt(rela64_offset_ix_, ix_rela64_ix, &read_offset))
+          return false;
+        if (!VectorAt(rela64_addend_ix_, ix_rela64_ix, &read_addend))
+          return false;
+        ++ix_rela64_ix;
+
+        uint64 offset = read_offset + current_rva;
+        int64 addend = read_addend;
+
+        if (!output->Write(&offset, sizeof(offset)))
+          return false;
+        if (!output->Write(&info, sizeof(info)))
+          return false;
+        if (!output->Write(&addend, sizeof(addend)))
+          return false;
+
+        current_rva += sizeof(Elf64_Rela);
         break;
       }
 
@@ -686,6 +776,10 @@ CheckBool EncodedProgram::AssembleTo(SinkStream* final_buffer) {
   if (ix_abs32_ix != abs32_ix_.size())
     return false;
   if (ix_rel32_ix != rel32_ix_.size())
+    return false;
+  if (ix_rela64_ix != rela64_offset_ix_.size())
+    return false;
+  if (ix_rela64_ix != rela64_addend_ix_.size())
     return false;
 
   return true;
